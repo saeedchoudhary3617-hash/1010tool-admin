@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>1010 Tools · Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{--bg:#F3EFE6;--surface:#F5F1E8;--hover:#EDE7DC;--border:#D1C9BD;--text:#171614;--light:#625B53;--accent:#B95740;--ink:#171614;--inkt:#F3EFE6;--shd:#171614;--ok:#2f7d4f}
+@media (prefers-color-scheme:dark){:root{--bg:#171614;--surface:#201E1B;--hover:#2A2723;--border:#3B3731;--text:#F3EFE6;--light:#A39A8E;--accent:#D0654B;--ink:#F3EFE6;--inkt:#171614;--shd:#000;--ok:#5fc08a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;line-height:1.55;padding:18px}
+.wrap{max-width:640px;margin:0 auto}
+h1{font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:40px;letter-spacing:-.03em;margin:0 0 4px}
+h1 i{color:var(--accent)}
+h2{font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:28px;margin:0 0 12px;letter-spacing:-.02em}
+.badge{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--light)}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:4px 4px 0 var(--shd);padding:22px;margin-top:20px}
+label{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--light);margin:14px 0 6px}
+input,textarea{width:100%;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+button{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:14px;letter-spacing:.06em;text-transform:uppercase;background:var(--ink);color:var(--inkt);border:0;border-radius:10px;box-shadow:4px 4px 0 var(--accent);padding:13px 22px;cursor:pointer;margin-top:18px}
+button:disabled{opacity:.5;cursor:wait}
+button.ghost{background:none;color:var(--text);border:1px solid var(--border);box-shadow:none;padding:8px 12px;margin:0;font-size:12px}
+.msg{margin-top:14px;font-size:14px;min-height:20px}
+.err{color:var(--accent)}.ok{color:var(--ok)}
+.bar{height:8px;background:var(--hover);border-radius:6px;overflow:hidden;margin-top:12px;display:none}
+.bar div{height:100%;width:0;background:var(--accent);transition:width .2s}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--border);border-radius:12px;background:var(--bg);padding:12px 14px;margin-top:10px}
+.row b{display:block}.row small{color:var(--light)}
+.row a{color:var(--accent)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><h1>1010 <i>Tools</i></h1><div class="badge">Admin · APK upload</div></div>
+    <button class="ghost hide" id="out">Logout</button>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="panel" id="loginBox">
+    <h2>Admin login</h2>
+    <label>Email</label><input id="email" type="email" autocomplete="username">
+    <label>Password</label><input id="pass" type="password" autocomplete="current-password">
+    <button id="login">Login</button>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="panel hide" id="upBox">
+    <h2>Nayi APK upload karo</h2>
+    <label>APK file</label><input id="file" type="file" accept=".apk,application/vnd.android.package-archive">
+    <label>Version (jaise 1.2)</label><input id="ver" placeholder="1.0">
+    <label>Notes (optional)</label><textarea id="notes" rows="3" placeholder="Is version mein kya naya hai"></textarea>
+    <button id="up">Upload karo</button>
+    <div class="bar" id="bar"><div id="barIn"></div></div>
+    <div class="msg" id="upMsg"></div>
+  </div>
+
+  <!-- LIST -->
+  <div class="panel hide" id="listBox">
+    <h2>Uploaded versions</h2>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script>
+// ====== YAHAN APNI SUPABASE DETAILS BHARO ======
+var SUPABASE_URL = "https://cdtxhdhhenhibzgcycqf.supabase.co";      // jaise https://abcd1234.supabase.co
+var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkdHhoZGhoZW5oaWJ6Z2N5Y3FmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ2NDI2MzcsImV4cCI6MjExMDIxODYzN30.MkS0biIE4JKzjYQ1aTqM5THLE_Ke_uNReVeDa-lPikE";
+// ===============================================
+
+var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var $ = function(id){return document.getElementById(id)};
+function show(el, on){ $(el).classList.toggle('hide', !on); }
+function say(id, text, cls){ var e=$(id); e.textContent=text; e.className='msg '+(cls||''); }
+function pubUrl(path){ return SUPABASE_URL+'/storage/v1/object/public/apks/'+encodeURIComponent(path); }
+
+async function refresh(){
+  var s = await sb.auth.getSession();
+  var logged = !!(s.data && s.data.session);
+  show('loginBox', !logged); show('upBox', logged); show('listBox', logged); show('out', logged);
+  if(logged) loadList();
+}
+
+async function loadList(){
+  var r = await sb.from('releases').select('*').order('created_at',{ascending:false});
+  var box = $('list'); box.innerHTML='';
+  if(r.error){ box.textContent = 'List nahi load hui: '+r.error.message; return; }
+  if(!r.data.length){ box.textContent='Abhi koi APK upload nahi hui.'; return; }
+  r.data.forEach(function(x,i){
+    var d = document.createElement('div'); d.className='row';
+    var left = document.createElement('div');
+    var b = document.createElement('b'); b.textContent = 'v'+x.version+(i===0?'  (latest)':'');
+    var sm = document.createElement('small'); sm.textContent = new Date(x.created_at).toLocaleString()+(x.notes?' · '+x.notes:'');
+    var a = document.createElement('a'); a.href = pubUrl(x.file_path); a.textContent=' download'; a.target='_blank'; a.rel='noopener';
+    b.appendChild(a); left.appendChild(b); left.appendChild(sm);
+    var del = document.createElement('button'); del.className='ghost'; del.textContent='Delete';
+    del.onclick = async function(){
+      if(!confirm('v'+x.version+' delete karni hai?')) return;
+      await sb.storage.from('apks').remove([x.file_path]);
+      var e = await sb.from('releases').delete().eq('id', x.id);
+      if(e.error) alert(e.error.message); loadList();
+    };
+    d.appendChild(left); d.appendChild(del); box.appendChild(d);
+  });
+}
+
+$('login').onclick = async function(){
+  this.disabled = true; say('loginMsg','Login ho raha hai...');
+  var r = await sb.auth.signInWithPassword({email:$('email').value.trim(), password:$('pass').value});
+  this.disabled = false;
+  if(r.error) say('loginMsg', r.error.message, 'err'); else { say('loginMsg',''); refresh(); }
+};
+$('out').onclick = async function(){ await sb.auth.signOut(); refresh(); };
+
+$('up').onclick = async function(){
+  var f = $('file').files[0], ver = $('ver').value.trim();
+  if(!f){ say('upMsg','Pehle APK file chuno.','err'); return; }
+  if(!/\.apk$/i.test(f.name)){ say('upMsg','Sirf .apk file allowed hai.','err'); return; }
+  if(!ver){ say('upMsg','Version likho.','err'); return; }
+  var btn = this; btn.disabled = true; say('upMsg','Upload ho rahi hai...');
+  $('bar').style.display='block'; $('barIn').style.width='15%';
+  var path = '1010Tool-v'+ver.replace(/[^0-9A-Za-z._-]/g,'_')+'-'+Date.now()+'.apk';
+  var up = await sb.storage.from('apks').upload(path, f, {contentType:'application/vnd.android.package-archive', upsert:false});
+  if(up.error){ btn.disabled=false; $('bar').style.display='none'; say('upMsg','Upload fail: '+up.error.message,'err'); return; }
+  $('barIn').style.width='85%';
+  var ins = await sb.from('releases').insert({version:ver, notes:$('notes').value.trim()||null, file_path:path});
+  btn.disabled = false; $('barIn').style.width='100%';
+  if(ins.error){ say('upMsg','Record save fail: '+ins.error.message,'err'); return; }
+  say('upMsg','Upload ho gayi! Website ka button ab isi version par le jayega.','ok');
+  $('file').value=''; $('ver').value=''; $('notes').value=''; loadList();
+  setTimeout(function(){ $('bar').style.display='none'; $('barIn').style.width='0'; }, 1500);
+};
+
+refresh();
+</script>
+</body>
+</html>
