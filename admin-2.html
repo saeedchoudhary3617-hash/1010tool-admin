@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>1010 Tools · Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{--bg:#F3EFE6;--surface:#F5F1E8;--hover:#EDE7DC;--border:#D1C9BD;--text:#171614;--light:#625B53;--accent:#B95740;--ink:#171614;--inkt:#F3EFE6;--shd:#171614;--ok:#2f7d4f}
+@media (prefers-color-scheme:dark){:root{--bg:#171614;--surface:#201E1B;--hover:#2A2723;--border:#3B3731;--text:#F3EFE6;--light:#A39A8E;--accent:#D0654B;--ink:#F3EFE6;--inkt:#171614;--shd:#000;--ok:#5fc08a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;line-height:1.5;padding:16px}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:38px;letter-spacing:-.03em;margin:0}
+h1 i{color:var(--accent)}
+h2{font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:26px;margin:0 0 10px;letter-spacing:-.02em}
+.badge,label,.lab{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--light)}
+label{display:block;margin:14px 0 6px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:4px 4px 0 var(--shd);padding:20px;margin-top:18px}
+input,textarea{width:100%;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+button{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:13px;letter-spacing:.05em;text-transform:uppercase;background:var(--ink);color:var(--inkt);border:0;border-radius:10px;box-shadow:3px 3px 0 var(--accent);padding:12px 18px;min-height:44px;cursor:pointer;margin-top:14px;touch-action:manipulation}
+button:disabled{opacity:.5;cursor:wait}
+button.ghost{background:none;color:var(--text);border:1px solid var(--border);box-shadow:none;padding:8px 12px;margin:0;font-size:11px;min-height:40px}
+button.danger{color:var(--accent);border-color:var(--accent)}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:14px 2px 4px}
+.tabs button{margin:0;flex:none;background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:none}
+.tabs button.on{background:var(--ink);color:var(--inkt);border-color:var(--ink);box-shadow:3px 3px 0 var(--accent)}
+.msg{margin-top:12px;font-size:14px;min-height:18px}.err{color:var(--accent)}.ok{color:var(--ok)}
+.bar{height:8px;background:var(--hover);border-radius:6px;overflow:hidden;margin-top:12px;display:none}.bar div{height:100%;width:0;background:var(--accent);transition:width .2s}
+.row{border:1px solid var(--border);border-radius:12px;background:var(--bg);padding:12px 14px;margin-top:10px}
+.row b{font-size:16px}.row small{display:block;color:var(--light);margin-top:2px;word-break:break-word}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;border-radius:6px;padding:2px 8px;margin-left:6px;background:var(--hover);border:1px solid var(--border);color:var(--light)}
+.chip.g{background:var(--ok);color:#fff;border-color:var(--ok)}.chip.r{background:var(--accent);color:#fff;border-color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat{border:1px solid var(--border);border-radius:12px;background:var(--bg);padding:14px}
+.stat b{display:block;font-family:'Instrument Serif',Georgia,serif;font-size:34px;font-weight:400;line-height:1}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div><h1>1010 <i>Tools</i></h1><div class="badge">Admin control panel</div></div><button class="ghost hide" id="out">Logout</button></div>
+
+  <div class="panel" id="loginBox">
+    <h2>Admin login</h2>
+    <label>Email</label><input id="email" type="email" autocomplete="username">
+    <label>Password</label><input id="pass" type="password" autocomplete="current-password">
+    <button id="login">Login</button><div class="msg" id="loginMsg"></div>
+  </div>
+
+  <div id="app" class="hide">
+    <div class="tabs" id="tabs"></div>
+
+    <!-- VERSIONS -->
+    <div id="tab-versions">
+      <div class="panel">
+        <h2>Nayi APK upload karo</h2>
+        <label>APK file</label><input id="file" type="file" accept=".apk,application/vnd.android.package-archive">
+        <label>Version (jaise 2.5.1)</label><input id="ver" placeholder="2.5.1">
+        <label>Notes (optional)</label><textarea id="notes" rows="3" placeholder="Is version mein kya naya hai"></textarea>
+        <button id="up">Upload karo</button>
+        <div class="bar" id="bar"><div id="barIn"></div></div><div class="msg" id="upMsg"></div>
+      </div>
+      <div class="panel"><h2>Saare versions</h2><div id="vlist"></div></div>
+    </div>
+
+    <!-- CONTROL -->
+    <div id="tab-control" class="hide">
+      <div class="panel">
+        <h2>Force update</h2>
+        <div class="lab">Latest abhi: <span id="curLatest">-</span></div>
+        <label>Minimum version (isse purani app block hogi)</label><input id="minv" placeholder="0.0.0">
+        <label>Message jo user ko dikhe</label><input id="minmsg">
+        <div class="acts"><button id="saveMin">Save</button><button class="ghost" id="minLatest">Latest ke barabar karo</button><button class="ghost" id="minOff">Band karo (0.0.0)</button></div>
+        <div class="msg" id="minMsgOut"></div>
+        <div class="lab" style="margin-top:6px">Ye tabhi kaam karega jab app mein force-update ka feature ho (agla app prompt).</div>
+      </div>
+      <div class="panel">
+        <h2>Emergency switch</h2>
+        <div id="dlState" class="lab"></div>
+        <button class="danger ghost" id="dlBtn" style="margin-top:12px"></button>
+        <div class="msg" id="dlMsg"></div>
+        <div class="lab">Band hone par website ka Download APK button kaam nahi karega.</div>
+      </div>
+    </div>
+
+    <!-- ANNOUNCEMENT -->
+    <div id="tab-ann" class="hide">
+      <div class="panel">
+        <h2>Naya announcement</h2>
+        <label>Message (max 200 akshar)</label><textarea id="annMsg" rows="2" maxlength="200" placeholder="Naya feature aaya hai!"></textarea>
+        <label>Kab tak dikhe (optional)</label><input id="annExp" type="datetime-local">
+        <button id="annAdd">Add karo</button><div class="msg" id="annOut"></div>
+      </div>
+      <div class="panel"><h2>Announcements</h2><div id="annList"></div></div>
+    </div>
+
+    <!-- STATS -->
+    <div id="tab-stats" class="hide">
+      <div class="panel"><h2>Stats</h2><div class="stats" id="statCards"></div><button id="statRef">Refresh</button><div class="msg" id="statMsg"></div></div>
+      <div class="panel"><h2>Version ke hisaab se phones</h2><div id="byVer"></div></div>
+      <div class="panel"><h2>Version ke hisaab se downloads</h2><div id="dlVer"></div></div>
+    </div>
+
+    <!-- WEBSITE -->
+    <div id="tab-site" class="hide">
+      <div class="panel">
+        <h2>Website ka content</h2>
+        <label>Kya naya hai (website par dikhega)</label><textarea id="wn" rows="4" placeholder="Photo to KB tool, update alert..."></textarea>
+        <label>Extra FAQ (built-in FAQ ke baad)</label><div id="faqBox"></div>
+        <div class="acts"><button class="ghost" id="faqAdd">+ Sawal jodo</button></div>
+        <button id="siteSave">Save</button><div class="msg" id="siteMsg"></div>
+        <div class="lab">Blogger page ko ye content padhne ke liye alag update chahiye (agla step).</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL="https://cdtxhdhhenhibzgcycqf.supabase.co";
+var SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkdHhoZGhoZW5oaWJ6Z2N5Y3FmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ2NDI2MzcsImV4cCI6MjExMDIxODYzN30.MkS0biIE4JKzjYQ1aTqM5THLE_Ke_uNReVeDa-lPikE";
+var sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+var $=function(i){return document.getElementById(i)};
+function mk(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!==undefined)e.textContent=x;return e}
+function say(id,t,c){var e=$(id);e.textContent=t;e.className='msg '+(c||'')}
+function pub(p){return SUPABASE_URL+'/storage/v1/object/public/apks/'+encodeURIComponent(p)}
+function btn(t,fn,cls){var b=mk('button',cls||'ghost',t);b.onclick=fn;return b}
+function fmt(d){return new Date(d).toLocaleString()}
+var latestVer=null,dlOn=true;
+
+/* ---------- tabs ---------- */
+var TABS=[['versions','Versions',loadVersions],['control','Control',loadControl],['ann','Announcement',loadAnn],['stats','Stats',loadStats],['site','Website',loadSite]];
+(function(){var t=$('tabs');TABS.forEach(function(x){var b=mk('button','',x[1]);b.id='tb-'+x[0];b.onclick=function(){showTab(x[0])};t.appendChild(b)})})();
+function showTab(n){TABS.forEach(function(x){$('tab-'+x[0]).classList.toggle('hide',x[0]!==n);$('tb-'+x[0]).className=x[0]===n?'on':'';if(x[0]===n)x[2]()})}
+
+/* ---------- auth ---------- */
+async function refresh(){var s=await sb.auth.getSession();var ok=!!(s.data&&s.data.session);$('loginBox').classList.toggle('hide',ok);$('app').classList.toggle('hide',!ok);$('out').classList.toggle('hide',!ok);if(ok)showTab('versions')}
+$('login').onclick=async function(){this.disabled=true;say('loginMsg','Login ho raha hai...');var r=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('pass').value});this.disabled=false;if(r.error)say('loginMsg',r.error.message,'err');else{say('loginMsg','');refresh()}};
+$('out').onclick=async function(){await sb.auth.signOut();refresh()};
+
+/* ---------- versions ---------- */
+async function loadVersions(){
+  var r=await sb.from('releases').select('*').order('created_at',{ascending:false});var box=$('vlist');box.textContent='';
+  if(r.error){box.textContent=r.error.message;return}
+  var rows=r.data;if(!rows.length){box.textContent='Abhi koi APK upload nahi hui.';return}
+  var live=rows.find(function(x){return x.pinned_latest&&!x.hidden})||rows.find(function(x){return !x.hidden});latestVer=live?live.version:null;
+  rows.forEach(function(x){
+    var d=mk('div','row'),h=mk('div'),b=mk('b','','v'+x.version);h.appendChild(b);
+    if(live&&x.id===live.id)h.appendChild(mk('span','chip g','latest'));
+    if(x.pinned_latest)h.appendChild(mk('span','chip','pinned'));
+    if(x.hidden)h.appendChild(mk('span','chip r','hidden'));
+    d.appendChild(h);d.appendChild(mk('small','',fmt(x.created_at)+(x.notes?' · '+x.notes:'')));
+    var a=mk('div','acts');
+    a.appendChild(btn('Notes edit',async function(){var n=prompt('Notes for v'+x.version,x.notes||'');if(n===null)return;await sb.from('releases').update({notes:n.trim()||null}).eq('id',x.id);loadVersions()}));
+    a.appendChild(btn(x.hidden?'Dikhao':'Chhupao',async function(){await sb.from('releases').update({hidden:!x.hidden,pinned_latest:x.hidden?x.pinned_latest:false}).eq('id',x.id);loadVersions()}));
+    if(!x.hidden)a.appendChild(btn(x.pinned_latest?'Pin hatao':'Latest banao',async function(){await sb.from('releases').update({pinned_latest:false}).eq('pinned_latest',true);if(!x.pinned_latest)await sb.from('releases').update({pinned_latest:true}).eq('id',x.id);loadVersions()}));
+    a.appendChild(btn('Link copy',function(){var u=pub(x.file_path);if(navigator.clipboard)navigator.clipboard.writeText(u);else prompt('Link',u)}));
+    a.appendChild(btn('Delete',async function(){if(!confirm('v'+x.version+' delete karni hai? Ye wapas nahi aayegi.'))return;await sb.storage.from('apks').remove([x.file_path]);var e=await sb.from('releases').delete().eq('id',x.id);if(e.error)alert(e.error.message);loadVersions()},'ghost danger'));
+    d.appendChild(a);box.appendChild(d)});
+}
+$('up').onclick=async function(){
+  var f=$('file').files[0],ver=$('ver').value.trim();
+  if(!f){say('upMsg','Pehle APK file chuno.','err');return}
+  if(!/\.apk$/i.test(f.name)){say('upMsg','Sirf .apk file allowed hai.','err');return}
+  if(!/^[0-9A-Za-z._-]{1,20}$/.test(ver)){say('upMsg','Version sahi likho (jaise 2.5.1).','err');return}
+  var b=this;b.disabled=true;say('upMsg','Upload ho rahi hai...');$('bar').style.display='block';$('barIn').style.width='15%';
+  var path='1010Tool-v'+ver.replace(/[^0-9A-Za-z._-]/g,'_')+'-'+Date.now()+'.apk';
+  var up=await sb.storage.from('apks').upload(path,f,{contentType:'application/vnd.android.package-archive',upsert:false});
+  if(up.error){b.disabled=false;$('bar').style.display='none';say('upMsg','Upload fail: '+up.error.message,'err');return}
+  $('barIn').style.width='85%';
+  var ins=await sb.from('releases').insert({version:ver,notes:$('notes').value.trim()||null,file_path:path});
+  b.disabled=false;$('barIn').style.width='100%';
+  if(ins.error){say('upMsg','Record save fail: '+ins.error.message,'err');return}
+  say('upMsg','Upload ho gayi!','ok');$('file').value='';$('ver').value='';$('notes').value='';loadVersions();
+  setTimeout(function(){$('bar').style.display='none';$('barIn').style.width='0'},1500);
+};
+
+/* ---------- control ---------- */
+async function setSetting(k,v){return sb.from('app_settings').upsert({key:k,value:v,updated_at:new Date().toISOString()},{onConflict:'key'})}
+function renderDl(){$('dlState').textContent='Downloads abhi: '+(dlOn?'CHALU':'BAND');$('dlBtn').textContent=dlOn?'Downloads band karo':'Downloads wapas chalu karo'}
+async function loadControl(){
+  await loadVersions();$('curLatest').textContent=latestVer?'v'+latestVer:'-';
+  var r=await sb.from('app_settings').select('key,value');var m={};(r.data||[]).forEach(function(x){m[x.key]=x.value});
+  $('minv').value=m.min_version||'0.0.0';$('minmsg').value=m.force_update_message||'';dlOn=m.downloads_enabled!==false;renderDl();
+}
+async function saveMin(v){
+  if(!/^\d+(\.\d+){0,3}$/.test(v)){say('minMsgOut','Version aisa likho: 2.5.0','err');return}
+  var a=await setSetting('min_version',v),b=await setSetting('force_update_message',$('minmsg').value.trim()||'A new version is required. Please update the app.');
+  if(a.error||b.error)say('minMsgOut',(a.error||b.error).message,'err');else{$('minv').value=v;say('minMsgOut','Save ho gaya: minimum v'+v,'ok')}
+}
+$('saveMin').onclick=function(){saveMin($('minv').value.trim())};
+$('minLatest').onclick=function(){if(!latestVer)return;if(confirm('Minimum version v'+latestVer+' karni hai? Isse purani saari apps block ho sakti hain.'))saveMin(latestVer)};
+$('minOff').onclick=function(){saveMin('0.0.0')};
+$('dlBtn').onclick=async function(){
+  if(dlOn&&!confirm('Website ke downloads band karne hain?'))return;
+  var r=await setSetting('downloads_enabled',!dlOn);if(r.error){say('dlMsg',r.error.message,'err');return}
+  dlOn=!dlOn;renderDl();say('dlMsg',dlOn?'Downloads chalu.':'Downloads band.','ok');
+};
+
+/* ---------- announcements ---------- */
+async function loadAnn(){
+  var r=await sb.from('announcements').select('*').order('created_at',{ascending:false});var box=$('annList');box.textContent='';
+  if(r.error){box.textContent=r.error.message;return}
+  if(!r.data.length){box.textContent='Abhi koi announcement nahi.';return}
+  r.data.forEach(function(x){
+    var expired=x.expires_at&&new Date(x.expires_at)<new Date();
+    var d=mk('div','row'),h=mk('div'),b=mk('b','',x.message);h.appendChild(b);d.appendChild(h);
+    var s=mk('span',x.active&&!expired?'chip g':'chip',expired?'expired':(x.active?'live':'off'));
+    d.appendChild(mk('small','','Banaya: '+fmt(x.created_at)+(x.expires_at?' · Khatam: '+fmt(x.expires_at):'')));d.firstChild.appendChild(s);
+    var a=mk('div','acts');
+    a.appendChild(btn(x.active?'Off karo':'On karo',async function(){await sb.from('announcements').update({active:!x.active}).eq('id',x.id);loadAnn()}));
+    a.appendChild(btn('Delete',async function(){if(!confirm('Delete karna hai?'))return;await sb.from('announcements').delete().eq('id',x.id);loadAnn()},'ghost danger'));
+    d.appendChild(a);box.appendChild(d)});
+}
+$('annAdd').onclick=async function(){
+  var m=$('annMsg').value.trim();if(!m){say('annOut','Message likho.','err');return}
+  var e=$('annExp').value;var r=await sb.from('announcements').insert({message:m,active:true,expires_at:e?new Date(e).toISOString():null});
+  if(r.error)say('annOut',r.error.message,'err');else{say('annOut','Add ho gaya.','ok');$('annMsg').value='';$('annExp').value='';loadAnn()}
+};
+
+/* ---------- stats ---------- */
+function listTo(id,arr){var box=$(id);box.textContent='';if(!arr||!arr.length){box.textContent='Abhi data nahi.';return}arr.forEach(function(x){var r=mk('div','row');r.appendChild(mk('b','','v'+x.version+'  ·  '+x.count));box.appendChild(r)})}
+async function loadStats(){
+  say('statMsg','Load ho raha hai...');var r=await sb.rpc('admin_stats');
+  if(r.error){say('statMsg',r.error.message,'err');return}say('statMsg','');var s=r.data,c=$('statCards');c.textContent='';
+  [['Phones (total)',s.installs_total],['Active 7 din',s.active_7d],['Active 30 din',s.active_30d],['Downloads (total)',s.downloads_total],['Downloads 7 din',s.downloads_7d]].forEach(function(x){var d=mk('div','stat');d.appendChild(mk('b','',String(x[1])));d.appendChild(mk('span','lab',x[0]));c.appendChild(d)});
+  listTo('byVer',s.installs_by_version);listTo('dlVer',s.downloads_by_version);
+}
+$('statRef').onclick=loadStats;
+
+/* ---------- website content ---------- */
+function faqRow(q,a){var d=mk('div','row'),i1=mk('input'),i2=mk('textarea');i1.placeholder='Sawal';i2.placeholder='Jawab';i2.rows=2;i1.value=q||'';i2.value=a||'';i1.className='fq';i2.className='fa';
+  var x=btn('Hatao',function(){d.remove()},'ghost danger');x.style.marginTop='8px';d.appendChild(i1);d.appendChild(i2);d.appendChild(x);$('faqBox').appendChild(d)}
+async function loadSite(){
+  var r=await sb.from('app_settings').select('value').eq('key','site_content').maybeSingle();var v=(r.data&&r.data.value)||{};
+  $('wn').value=v.whats_new||'';$('faqBox').textContent='';(v.faq||[]).forEach(function(x){faqRow(x.q,x.a)});
+}
+$('faqAdd').onclick=function(){faqRow('','')};
+$('siteSave').onclick=async function(){
+  var faq=[],q=document.querySelectorAll('#faqBox .fq'),a=document.querySelectorAll('#faqBox .fa');
+  for(var i=0;i<q.length;i++){var s=q[i].value.trim(),t=a[i].value.trim();if(s&&t)faq.push({q:s,a:t})}
+  var r=await setSetting('site_content',{whats_new:$('wn').value.trim(),faq:faq});
+  if(r.error)say('siteMsg',r.error.message,'err');else say('siteMsg','Save ho gaya.','ok');
+};
+
+refresh();
+</script>
+</body>
+</html>
